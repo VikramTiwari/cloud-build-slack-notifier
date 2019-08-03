@@ -9,6 +9,31 @@ if (
   process.exit(1)
 }
 
+if (process.env.GITHUB_ID === undefined || process.env.GITHUB_ID === null) {
+  console.log('Please specify GITHUB_ID in environment variables')
+  process.exit(1)
+}
+
+const statusMap = {
+  SUCCESS: 'Success',
+  FAILURE: 'Failure',
+  QUEUED: 'Queued',
+  WORKING: 'Working',
+  INTERNAL_ERROR: 'Internal Error',
+  TIMEOUT: 'Timeout',
+  CANCELLED: 'Cancelled'
+}
+
+const statusColorMap = {
+  SUCCESS: '#36A64F',
+  FAILURE: '#FF5252',
+  QUEUED: '#BBDEFB',
+  WORKING: '#D4E157',
+  INTERNAL_ERROR: '#FFD54F',
+  TIMEOUT: '#FFB74D',
+  CANCELLED: '#EEEEEE'
+}
+
 const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL)
 
 // eventToBuild transforms pubsub event message to a build object.
@@ -18,21 +43,47 @@ const eventToBuild = data => {
 
 // createSlackMessage create a message from a build object.
 const createSlackMessage = build => {
-  let message = {
-    text: `Build \`${build.id}\``,
+  const message = {
+    text: `Build ${statusMap[build.status]}`,
     mrkdwn: true,
     attachments: [
       {
-        title: 'Build logs',
-        title_link: build.logUrl,
+        title: 'Commit',
+        title_link: `https://github.com/${process.env.GITHUB_ID}/${
+          build.substitutions.REPO_NAME
+        }/commit/${build.substitutions.COMMIT_SHA}`,
+        color: statusColorMap[build.status],
         fields: [
           {
-            title: 'Status',
-            value: build.status
+            title: 'Repo',
+            value: build.substitutions.REPO_NAME
+          },
+          {
+            title: 'Branch',
+            value: build.substitutions.BRANCH_NAME
           }
         ]
+      },
+      {
+        title: 'Build',
+        title_link: build.logUrl,
+        color: statusColorMap[build.status],
+        fields: []
       }
     ]
+  }
+  if (build.substitutions.TAG_NAME && build.substitutions.TAG_NAME !== '') {
+    message.attachments[0].fields.push({
+      title: 'Tag',
+      value: build.substitutions.TAG_NAME
+    })
+  }
+  for (let index = 0; index < build.steps.length; index++) {
+    const step = build.steps[index]
+    message.attachments[1].fields.push({
+      title: step.name,
+      value: statusMap[step.status]
+    })
   }
   return message
 }
