@@ -9,7 +9,7 @@ This is built using source code posted here: https://cloud.google.com/cloud-buil
 - Replace the variables and deploy to cloud functions
 
 ```sh
-gcloud functions deploy cloud-build-slack-notifier --trigger-topic cloud-builds --runtime=nodejs10 --memory=128MB --set-env-vars SLACK_WEBHOOK_URL=<REPLACE_WITH_YOUR_SLACK_WEBHOOK_URL>,GITHUB_ID=<URL_SLUG_FOR_YOUR_OR_ORG_USERNAME>
+gcloud functions deploy cloudBuildSlackNotifier --trigger-topic cloud-builds --runtime=nodejs10 --memory=128MB --set-env-vars SLACK_WEBHOOK_URL=<REPLACE_WITH_YOUR_SLACK_WEBHOOK_URL>,GITHUB_ID=<URL_SLUG_FOR_YOUR_OR_ORG_USERNAME>
 ```
 
 Enjoy!
